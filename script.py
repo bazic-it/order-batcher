@@ -8,7 +8,7 @@ import pandas as pd
 from datetime import datetime
 from pathlib import Path
 
-APP_VERSION = '1.1.1'
+APP_VERSION = '1.1.2'
 
 ASSETS_BASE_DIR = 'S:/ECOM-CC-WHS/master_files'
 UOM_MASTER_FILENAME = 'uom_input.csv'
@@ -97,7 +97,7 @@ def getOrdersFromInputfile(filepath, uomMaster):
 
     return orders
 
-def combineOrders(orders):
+def combineOrders(orders, uomMaster):
     groupedByOrderNumber = {}
     groupedBySKU = {}
 
@@ -119,7 +119,7 @@ def combineOrders(orders):
                 'orderShipping': order.shipping
             }
         # group by SKU
-        actualSku = (order.sku).split('-')[0]
+        actualSku = uomMaster[order.sku]['item_number']
         if actualSku in groupedBySKU:
             groupedBySKU[actualSku].append(order)
         else:
@@ -307,7 +307,7 @@ def batchOrders(inputFilename):
         response["errorMessage"] = errorMessage
         return response
 
-    combinedOrders, orderDetails = combineOrders(orders)
+    combinedOrders, orderDetails = combineOrders(orders, uomMaster)
 
     if not combinedOrders or not orderDetails:
         errorMessage = "Please try again."
