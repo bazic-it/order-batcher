@@ -1,6 +1,5 @@
-# Ver: 1.0.1
 # Created: 9/13/2024
-# Last updated: 9/13/2024
+# Last updated: 9/16/2024
 
 import os
 import sys
@@ -8,6 +7,8 @@ import csv
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
+
+APP_VERSION = '1.1'
 
 ASSETS_BASE_DIR = 'S:/ECOM-CC-WHS/master_files'
 UOM_MASTER_FILENAME = 'uom_input.csv'
@@ -19,21 +20,21 @@ USER_DOWNLOADS = str(Path.home() / "Downloads") + '/'
 # INVENTORY_MASTER_FILENAME = 'inventory_input.csv'
 
 class Order:
-    def __init__(self, sku, itemDescription, price, orderNumber, totalPrice, paidByCustomer, tax, qty, qtyInEach, shipping):
+    def __init__(self, sku, itemDescription, itemPrice, orderNumber, orderTotal, paidByCustomer, tax, itemQty, qtyInEach, shipping):
         self.sku = sku
         self.itemDescription = itemDescription
-        self.price = float(price)
-        self.priceInEach = (float(totalPrice) - float(tax)) / int(qtyInEach)
+        self.itemPrice = float(itemPrice)
         self.orderNumber = orderNumber
-        self.totalPrice = float(totalPrice)
+        self.totalSaleOrder = float(itemPrice) * int(itemQty)
+        self.orderTotal = float(orderTotal)
         self.paidByCustomer = float(paidByCustomer)
         self.tax = float(tax)
-        self.qty = int(qty)
+        self.itemQty = int(itemQty)
         self.qtyInEach = int(qtyInEach)
         self.shipping = float(shipping)
     
     def __str__(self):
-        return 'sku: {}, qty: {}, qtyInEach: {}, priceInEach: {}'.format(self.sku, self.qty, self.qtyInEach, self.priceInEach)
+        return 'sku: {}, itemPrice: {}, qty: {}, qtyInEach: {}'.format(self.sku, self.itemPrice, self.itemQty, self.qtyInEach)
 
 def getTimestamp():
     now = datetime.now()
@@ -74,12 +75,7 @@ def getInventoryMasterData(inputFilepath):
 
 def getOrdersFromInputfile(filepath, uomMaster):
     orders = []
-    orderDetails = {
-        'totalOrderAmount': 0.0,
-        'totalPaidByCustomer': 0.0,
-        'totalOrderTax': 0.0,
-        'totalShipping': 0.0
-    }
+    
 
     try:
         with open (filepath, mode='r') as file:
@@ -94,42 +90,62 @@ def getOrdersFromInputfile(filepath, uomMaster):
                     qtyInEach = int(uomMaster[line[0]]['uom']) * int(line[6])
                     order = Order(line[0], '', line[1], line[2], line[3], line[4], line[5], line[6], qtyInEach, line[7])
                     orders.append(order)
-                    orderDetails['totalOrderAmount'] += float(line[3])
-                    orderDetails['totalPaidByCustomer'] += float(line[4])
-                    orderDetails['totalOrderTax'] += float(line[5])
-                    orderDetails['totalShipping'] += float(line[7])
                 count += 1
     except:
         print('*** Error: Failed to read batch input file. Please make sure filename is valid. ***')
         return [], {}
 
-    return orders, orderDetails
+    return orders
 
-def combineOrdersWithSameSKU(orders):
-    mapped = {}
-    for order in orders:
-        actualSku = (order.sku).split('-')[0]
-        if actualSku in mapped:
-            mapped[actualSku].append(order)
-        else:
-            mapped[actualSku] = [order]
+def combineOrders(orders):
+    groupedByOrderNumber = {}
+    groupedBySKU = {}
 
     processedOrders = {}
-    for sku, orders in mapped.items():
+    orderDetails = {
+        'totalOrderAmount': 0.0,
+        'totalPaidByCustomer': 0.0,
+        'totalOrderTax': 0.0,
+        'totalShipping': 0.0
+    }
+
+    for order in orders:
+        # group by Order Number
+        if order.orderNumber not in groupedByOrderNumber:
+            groupedByOrderNumber[order.orderNumber] = {
+                'orderTotal': order.orderTotal,
+                'orderPaidByCustomer': order.paidByCustomer,
+                'orderTax': order.tax,
+                'orderShipping': order.shipping
+            }
+        # group by SKU
+        actualSku = (order.sku).split('-')[0]
+        if actualSku in groupedBySKU:
+            groupedBySKU[actualSku].append(order)
+        else:
+            groupedBySKU[actualSku] = [order]
+
+    for sku, orders in groupedBySKU.items():
         totalQty = 0
         totalPrice = 0
         for order in orders:
             totalQty += order.qtyInEach
-            totalPrice += (float(order.totalPrice) - float(order.tax)) # float(order.price) * int(order.qty)
+            totalPrice += order.totalSaleOrder
         processedOrders[sku] = {
             'sku': sku,
             'desc': order.itemDescription,
             'totalQty': int(totalQty),
             'totalPrice': float(totalPrice),
-            'unitPrice': float(totalPrice)/int(totalQty)
+            'pricePerPiece': float(totalPrice) / int(totalQty)
         }
 
-    return processedOrders
+    for orderNumber, order in groupedByOrderNumber.items():
+        orderDetails['totalOrderAmount'] += order['orderTotal']
+        orderDetails['totalPaidByCustomer'] += order['orderPaidByCustomer']
+        orderDetails['totalOrderTax'] += order['orderTax']
+        orderDetails['totalShipping'] += order['orderShipping']
+
+    return processedOrders, orderDetails
 
 def getOrdersWithUOMVariants(results, order, caseQty, boxQty):
     caseQty = int(caseQty)
@@ -140,7 +156,7 @@ def getOrdersWithUOMVariants(results, order, caseQty, boxQty):
     eachNumber = 0
     totalQty = order['totalQty']
     itemDesc = order['desc']
-    pricePerPiece = order['unitPrice']
+    pricePerPiece = order['pricePerPiece']
  
     if caseQty != 0:
         caseNumber = totalQty // caseQty
@@ -213,7 +229,7 @@ def processResult(filepath, uomMaster, inventoryMaster, orders, orderDetails):
         'totalShipping': orderDetails['totalShipping']
     }
 
-    dataFrame = pd.DataFrame(results, columns=['SKU', 'Desc', 'UOM', 'QTY', 'Unit Price'])
+    dataFrame = pd.DataFrame(results, columns=['SKU', 'Desc', 'UOM', 'QTY', 'PpP'])
     dataFrame.index = dataFrame.index + 1
     # dataFrame.to_excel(filepath, startrow=3, startcol=0) # WORKING
 
@@ -282,17 +298,18 @@ def batchOrders(inputFilename):
         response["errorMessage"] = errorMessage
         return response
 
-    orders, orderDetails = getOrdersFromInputfile(batchFilename, uomMaster)
-    if not orders or not orderDetails:
+    orders = getOrdersFromInputfile(batchFilename, uomMaster)
+
+    if not orders:
         errorMessage = "Please check your input batch file: " + inputFilename
         isSuccess = False
         response["success"] = isSuccess
         response["errorMessage"] = errorMessage
         return response
 
-    combinedOrders = combineOrdersWithSameSKU(orders)
+    combinedOrders, orderDetails = combineOrders(orders)
 
-    if not combinedOrders:
+    if not combinedOrders or not orderDetails:
         errorMessage = "Please try again."
         isSuccess = False
         response["success"] = isSuccess

@@ -6,7 +6,7 @@ from script import *
 class App:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("Order Batcher - 1.0")
+        self.root.title("Order Batcher - {}".format(APP_VERSION))
         self.root.geometry("450x350")
 
         self.frame1 = tk.Frame(self.root)
@@ -14,9 +14,6 @@ class App:
 
         self.labelFrame1 = tk.LabelFrame(self.frame1, text="Batch Filename")
         self.labelFrame1.pack(padx=20, pady=20)
-
-        # self.inputLabel = tk.Label(self.labelFrame1, text=inputLabelText, font=("Arial", 9), anchor="w", width=50)
-        # self.inputLabel.pack(padx=10, pady=(5,0))
 
         self.inputField = tk.Entry(self.labelFrame1, font=("Arial", 10), width=50)
         self.inputField.bind("<KeyPress>", self.onEnter)
@@ -31,8 +28,6 @@ class App:
         self.labelFrame2 = tk.LabelFrame(self.frame1, text="Out of Stock SKU(s)")
         self.labelFrame2.pack(padx=20, pady=20)
 
-        # self.outOfStockLabel = tk.Label(self.labelFrame2, text='Out of Stock SKU(s):', font=("Arial", 9), anchor="w", width=50)
-        # self.outOfStockLabel.pack(padx=10)
         self.outOfStockSKUsBox = tk.Text(self.labelFrame2, font=("Arial", 9), width=50)
         self.outOfStockSKUsBox.pack(padx=10, pady=(5,10))
         self.outOfStockSKUsBox.config(state=tk.DISABLED)
