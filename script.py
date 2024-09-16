@@ -8,7 +8,7 @@ import pandas as pd
 from datetime import datetime
 from pathlib import Path
 
-APP_VERSION = '1.1'
+APP_VERSION = '1.1.1'
 
 ASSETS_BASE_DIR = 'S:/ECOM-CC-WHS/master_files'
 UOM_MASTER_FILENAME = 'uom_input.csv'
@@ -93,7 +93,7 @@ def getOrdersFromInputfile(filepath, uomMaster):
                 count += 1
     except:
         print('*** Error: Failed to read batch input file. Please make sure filename is valid. ***')
-        return [], {}
+        return []
 
     return orders
 
