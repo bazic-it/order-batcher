@@ -5,15 +5,8 @@ import os
 import csv
 import pandas as pd
 from datetime import datetime
-from pathlib import Path
 import openpyxl
-
-APP_VERSION = '1.1.4'
-
-ASSETS_BASE_DIR = 'S:/ECOM-CC-WHS/master_files'
-UOM_MASTER_FILENAME = 'uom_input.csv'
-INVENTORY_MASTER_FILENAME = 'Available Qty Whse 01 + 05.xlsx'
-USER_DOWNLOADS = str(Path.home() / "Downloads") + '/'
+from config import *
 
 class Order:
     def __init__(self, sku, itemDescription, itemPrice, orderNumber, orderTotal, paidByCustomer, tax, itemQty, qtyInEach, shipping):
