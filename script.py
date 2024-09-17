@@ -2,17 +2,18 @@
 # Last updated: 9/16/2024
 
 import os
-import sys
 import csv
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
+import openpyxl
 
 APP_VERSION = '1.1.2'
 
 ASSETS_BASE_DIR = 'S:/ECOM-CC-WHS/master_files'
 UOM_MASTER_FILENAME = 'uom_input.csv'
-INVENTORY_MASTER_FILENAME = 'warehouse_1_5_input.csv'
+INVENTORY_MASTER_FILENAME = 'Available Qty Whse 01 + 05.xlsx'
+# INVENTORY_MASTER_FILENAME = 'warehouse_1_5_input.csv'
 USER_DOWNLOADS = str(Path.home() / "Downloads") + '/'
 
 # ASSETS_BASE_DIR = './assets/'
@@ -62,11 +63,22 @@ def getInventoryMasterData(inputFilepath):
     mapped = {}
 
     try:
-        with open (inputFilepath, mode='r') as file:
-            content = csv.reader(file)
-            for line in content:
-                if (len(line) == 4):
-                    mapped[line[1]] = int(line[3]) if line[3].isnumeric() else 0
+        workbook = openpyxl.load_workbook(inputFilepath) # #, Item No., Item Desc., Available Qty
+        sheet = workbook.active
+        for r in range(2, sheet.max_row+1):
+            itemNumber = None
+            for c in range(1, sheet.max_column+1):
+                data = sheet.cell(row=r, column=c).value
+                if c == 2:
+                    itemNumber = str(data)
+                if c == 4:
+                    mapped[itemNumber] = data
+
+        # with open (inputFilepath, mode='r') as file:
+        #     content = csv.reader(file)
+        #     for line in content:
+        #         if (len(line) == 4):
+        #             mapped[line[1]] = int(line[3]) if line[3].isnumeric() else 0
     except:
         print('*** Error: Failed to read input file for Inventory Master. Please make sure filename is valid. ***')
         return {}
@@ -76,7 +88,6 @@ def getInventoryMasterData(inputFilepath):
 def getOrdersFromInputfile(filepath, uomMaster):
     orders = []
     
-
     try:
         with open (filepath, mode='r') as file:
             count = 1
@@ -196,15 +207,19 @@ def getOrdersWithUOMVariants(results, order, caseQty, boxQty):
 
 def resultIsValidated(resultDetails, orders, inventoryMaster):
     outOfStockSKUs = []
+    cannotFindStockSKUs = []
     isOutOfStock = False
 
     if round(resultDetails['grandTotal'], 3) != round(resultDetails['totalOrderBeforeDiscount'], 3):
         return False, 'Total Before Discount does not match with Grand Total. Please contact Ecom right away.', []
     
     for sku, orderInfo in orders.items():
-        if int(orderInfo['totalQty']) > inventoryMaster[sku]:
-            outOfStockSKUs.append(sku)
-            isOutOfStock = True
+        if sku in inventoryMaster:
+            if int(orderInfo['totalQty']) > inventoryMaster[sku]:
+                outOfStockSKUs.append(sku)
+                isOutOfStock = True
+        else:
+            cannotFindStockSKUs.append(sku)
     
     if isOutOfStock:
         return False, 'One or more items are out of stock.', outOfStockSKUs
@@ -220,13 +235,17 @@ def processResult(filepath, uomMaster, inventoryMaster, orders, orderDetails):
         boxUOM = uomMaster[sku + '-BOX']['uom'] if uomMaster.get(sku +'-BOX') else 0
         grandTotalCrossCheck += getOrdersWithUOMVariants(results, orders[sku], caseUOM, boxUOM)
 
+    invoiceTotal = orderDetails['totalPaidByCustomer'] - orderDetails['totalOrderTax'] - orderDetails['totalShipping']
+    totalOrderBeforeDiscount = orderDetails['totalOrderAmount'] - orderDetails['totalOrderTax'] - orderDetails['totalShipping']
     resultDetails = {
         'grandTotal': grandTotalCrossCheck,
-        'totalOrderBeforeDiscount': orderDetails['totalOrderAmount'] - orderDetails['totalOrderTax'] - orderDetails['totalShipping'],
+        'totalOrderBeforeDiscount': totalOrderBeforeDiscount,
         'totalOrderAmount': orderDetails['totalOrderAmount'],
         'totalPaidByCustomer': orderDetails['totalPaidByCustomer'],
         'totalTax': orderDetails['totalOrderTax'],
-        'totalShipping': orderDetails['totalShipping']
+        'totalShipping': orderDetails['totalShipping'],
+        'discount': invoiceTotal - totalOrderBeforeDiscount,
+        'invoiceTotal': invoiceTotal
     }
 
     dataFrame = pd.DataFrame(results, columns=['SKU', 'Desc', 'UOM', 'QTY', 'PpP'])
@@ -234,7 +253,7 @@ def processResult(filepath, uomMaster, inventoryMaster, orders, orderDetails):
     # dataFrame.to_excel(filepath, startrow=3, startcol=0) # WORKING
 
     with pd.ExcelWriter(filepath, engine='xlsxwriter') as writer:
-        dataFrame.to_excel(writer, startrow=7, startcol=0)
+        dataFrame.to_excel(writer, startrow=10, startcol=0)
 
         worksheet = writer.sheets['Sheet1']
         worksheet.write(0, 0, 'Grand Total: ${:.2f}'.format(resultDetails['grandTotal']))
@@ -242,7 +261,10 @@ def processResult(filepath, uomMaster, inventoryMaster, orders, orderDetails):
         worksheet.write(2, 0, 'Order Total: ${:.2f}'.format(resultDetails['totalOrderAmount']))
         worksheet.write(3, 0, 'Customer Paid: ${:.2f}'.format(resultDetails['totalPaidByCustomer']))
         worksheet.write(4, 0, 'Tax: ${:.2f}'.format(resultDetails['totalTax']))
-        worksheet.write(5, 0, 'Shipping: ${:.2f}'.format(resultDetails['totalShipping']))
+        worksheet.write(5, 0, 'Discount: ${:.2f}'.format(resultDetails['discount']))
+        worksheet.write(6, 0, 'Shipping: ${:.2f}'.format(resultDetails['totalShipping']))
+        worksheet.write(7, 0, 'Invoice Total: ${:.2f}'.format(resultDetails['invoiceTotal']))
+
     
     print('Your batch output file is: ' + filepath)
     
@@ -284,7 +306,7 @@ def batchOrders(inputFilename):
     uomMaster = getUOMMasterData(uomMasterFilepath)
     inventoryMaster = getInventoryMasterData(inventoryMasterFilepath)
 
-    if not uomMaster or not inventoryMaster:
+    if not uomMaster:
         errorMessage = "Please check UOM Master: " + uomMasterFilepath
         isSuccess = False
         response["success"] = isSuccess
