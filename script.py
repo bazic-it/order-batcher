@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 import openpyxl
 
-APP_VERSION = '1.1.3'
+APP_VERSION = '1.1.4'
 
 ASSETS_BASE_DIR = 'S:/ECOM-CC-WHS/master_files'
 UOM_MASTER_FILENAME = 'uom_input.csv'
@@ -129,6 +129,7 @@ def combineOrders(orders, uomMaster):
                 'orderTax': order.tax,
                 'orderShipping': order.shipping
             }
+
         # group by SKU
         actualSku = uomMaster[order.sku]['item_number']
         if actualSku in groupedBySKU:
@@ -226,14 +227,37 @@ def resultIsValidated(resultDetails, orders, inventoryMaster):
         
     return True, '', []
 
+def splitSKUs(orders):
+    newOrders = {}
+
+    for sku, orderInfo in orders.items():
+        if '+' in sku:
+            skus = sku.split('+')
+            pricePerSku = orderInfo['pricePerPiece'] / len(skus)
+            for newSku in skus:
+                newOrderInfo = {
+                    'sku': newSku,
+                    'desc': orderInfo['desc'],
+                    'totalQty': orderInfo['totalQty'],
+                    'totalPrice': orderInfo['totalPrice'],
+                    'pricePerPiece': pricePerSku
+                }
+                newOrders[newSku] = newOrderInfo
+        else:
+            newOrders[sku] = orderInfo
+
+    return newOrders
+
 def processResult(filepath, uomMaster, inventoryMaster, orders, orderDetails):
     results = []
     grandTotalCrossCheck = 0
+
+    orders = splitSKUs(orders)
     
     for sku, orderInfo in orders.items():
         caseUOM = uomMaster[sku + '-CASE']['uom'] if uomMaster.get(sku + '-CASE') else 0
         boxUOM = uomMaster[sku + '-BOX']['uom'] if uomMaster.get(sku +'-BOX') else 0
-        grandTotalCrossCheck += getOrdersWithUOMVariants(results, orders[sku], caseUOM, boxUOM)
+        grandTotalCrossCheck += getOrdersWithUOMVariants(results, orderInfo, caseUOM, boxUOM)
 
     invoiceTotal = orderDetails['totalPaidByCustomer'] - orderDetails['totalOrderTax'] - orderDetails['totalShipping']
     totalOrderBeforeDiscount = orderDetails['totalOrderAmount'] - orderDetails['totalOrderTax'] - orderDetails['totalShipping']
