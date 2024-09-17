@@ -45,6 +45,7 @@ class App:
         self.statusMessage.config(text="")
 
     def submitBatch(self):
+        self.statusMessage.config(text="Processing...")
         self.clearMessages()
 
         inputFilename = self.inputField.get()

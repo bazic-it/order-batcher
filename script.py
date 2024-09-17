@@ -1,5 +1,5 @@
 # Created: 9/13/2024
-# Last updated: 9/16/2024
+# Last updated: 9/17/2024
 
 import os
 import csv
@@ -13,12 +13,7 @@ APP_VERSION = '1.1.4'
 ASSETS_BASE_DIR = 'S:/ECOM-CC-WHS/master_files'
 UOM_MASTER_FILENAME = 'uom_input.csv'
 INVENTORY_MASTER_FILENAME = 'Available Qty Whse 01 + 05.xlsx'
-# INVENTORY_MASTER_FILENAME = 'warehouse_1_5_input.csv'
 USER_DOWNLOADS = str(Path.home() / "Downloads") + '/'
-
-# ASSETS_BASE_DIR = './assets/'
-# UOM_MASTER_FILENAME = 'uom_input.csv'
-# INVENTORY_MASTER_FILENAME = 'inventory_input.csv'
 
 class Order:
     def __init__(self, sku, itemDescription, itemPrice, orderNumber, orderTotal, paidByCustomer, tax, itemQty, qtyInEach, shipping):
@@ -56,7 +51,7 @@ def getUOMMasterData(inputFilepath):
     except:
         print('*** Error: Failed to read input file for UOM Master. Please make sure filename is valid. ***')
         return {}
-    
+
     return mapped
 
 def getInventoryMasterData(inputFilepath):
