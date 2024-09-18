@@ -16,7 +16,7 @@ INSTRUCTION = """
 class App:
     def __init__(self):
         self.root = tk.Tk()
-        # self.root.iconbitmap("./assets/icon.ico")
+        self.root.iconbitmap("./assets/icon/icon.ico")
         self.root.title("Order Batcher - {}".format(APP_VERSION))
         self.root.geometry("450x350")
 
