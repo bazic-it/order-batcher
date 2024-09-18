@@ -287,9 +287,13 @@ def processResult(filepath, uomMaster, inventoryMaster, orders, orderDetails):
     return True, '', []
 
 def validateInputFilename(filename):
-    if '.csv' not in filename:
-        return filename + '.csv'
-    return filename
+    cleaned = ''
+    if '/' in filename:
+        cleaned = filename.split('/')[-1]
+    if '.csv' not in cleaned:
+        return cleaned + '.csv'
+    print(cleaned)
+    return cleaned
 
 def getUOMMasterFilepath():
     return os.path.join(ASSETS_BASE_DIR, UOM_MASTER_FILENAME)
@@ -298,8 +302,9 @@ def getInventoryMasterFilepath():
     return os.path.join(ASSETS_BASE_DIR, INVENTORY_MASTER_FILENAME)
 
 def batchOrders(inputFilename):
-    inputPath = USER_DOWNLOADS + inputFilename
-    
+    batchFilename = validateInputFilename(inputFilename)
+    inputPath = USER_DOWNLOADS + batchFilename
+
     isSuccess = True
     errorMessage = ''
     response = {
@@ -311,7 +316,6 @@ def batchOrders(inputFilename):
         'outputFilename': ''
     }
 
-    batchFilename = validateInputFilename(inputPath)
     uomMasterFilepath = getUOMMasterFilepath()
     inventoryMasterFilepath = getInventoryMasterFilepath()
 
@@ -332,7 +336,7 @@ def batchOrders(inputFilename):
         response["errorMessage"] = errorMessage
         return response
 
-    orders = getOrdersFromInputfile(batchFilename, uomMaster)
+    orders = getOrdersFromInputfile(inputPath, uomMaster)
 
     if not orders:
         errorMessage = "Please check your input batch file: " + inputFilename
