@@ -355,10 +355,11 @@ def batchOrders(inputFilename):
         return response
 
     outputFilename = 'batch_output_{}.xlsx'.format(getTimestamp())
+    outputFilepath = OUTPUT_DIR + outputFilename
 
-    isWithoutWarning, warningMessage, outOfStockSKUs =  processResult(outputFilename, uomMaster, inventoryMaster, combinedOrders, orderDetails)
+    isWithoutWarning, warningMessage, outOfStockSKUs =  processResult(outputFilepath, uomMaster, inventoryMaster, combinedOrders, orderDetails)
     response["warning"] = isWithoutWarning
     response["warningMessage"] = warningMessage
     response["outOfStockSKUs"] = outOfStockSKUs
-    response["outputFilename"] = outputFilename
+    response["outputFilename"] = outputFilepath
     return response
