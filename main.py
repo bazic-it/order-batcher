@@ -3,14 +3,28 @@ import tkinter as tk
 from tkinter import messagebox
 from script import *
 
+INSTRUCTION = """
+\n
+    1. Copy and paste your batch file from your Downloads folder into 'Batch Filename' field. (Note: Your batch file needs to be in the Downloads folder.)\n
+    2. Click the 'Batch' button or hit Enter on your keyboard.\n
+    3. If there is a warning or error, a pop-up will show up with the message.\n
+    4. If it is successful, an Excel file with the result will open automatically.\n
+    5. This program automatically converts quantity to CASE, BOX, and EACH. This program also splits SKUs bundle into individual SKU.\n
+    6. Copy the information from the Excel file onto SAP. (Note: If you are selecting all the columns when copying to SAP, make sure the columns order match.)\n
+"""
+
 class App:
     def __init__(self):
         self.root = tk.Tk()
+        # self.root.iconbitmap("./assets/icon.ico")
         self.root.title("Order Batcher - {}".format(APP_VERSION))
         self.root.geometry("450x350")
 
         self.frame1 = tk.Frame(self.root)
         self.frame1.pack()
+
+        self.howToButton = tk.Button(self.frame1, text="?", width=2, height=1, command=self.showInstruction)
+        self.howToButton.pack(side=tk.TOP, anchor=tk.NE, padx=(0,20), pady=(4,0))
 
         self.labelFrame1 = tk.LabelFrame(self.frame1, text="Batch Filename")
         self.labelFrame1.pack(padx=20, pady=20)
@@ -33,6 +47,9 @@ class App:
         self.outOfStockSKUsBox.config(state=tk.DISABLED)
         
         self.root.mainloop()
+
+    def showInstruction(self):
+        messagebox.showinfo(title='Instruction', message=INSTRUCTION)
 
     def onEnter(self, event):
         if event.keysym == "Return":
