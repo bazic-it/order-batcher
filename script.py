@@ -307,7 +307,7 @@ def writeLog(timestamp, status):
     user = os.getenv('COMPUTERNAME')
     try:
         with open(path, 'a') as file:
-            file.write('{} | {} | {} | {} | {} | {} | {} | {}\n'.format(user, status["success"], status["errorMessage"], status["warning"], status["warningMessage"], status["outOfStockSKUs"], status["outputFilename"], timestamp))
+            file.write('USR;{} | IN;{} | SUCCESS;{} | ERR;{} | WARNING;{} | WARN;{} | OOS;{} | OUT;{} | TS;{}\n'.format(user, status["inputFilename"], status["success"], status["errorMessage"], status["warning"], status["warningMessage"], status["outOfStockSKUs"], status["outputFilename"], timestamp))
     except:
         print('*** Error: Failed to write to logs. ***')
 
@@ -323,6 +323,7 @@ def batchOrders(inputFilename):
         'warning': None,
         'warningMessage': None,
         'outOfStockSKUs': [],
+        'inputFilename': batchFilename,
         'outputFilename': ''
     }
 
