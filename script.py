@@ -302,7 +302,17 @@ def getUOMMasterFilepath():
 def getInventoryMasterFilepath():
     return os.path.join(ASSETS_BASE_DIR, INVENTORY_MASTER_FILENAME)
 
+def writeLog(timestamp, status):
+    path = os.path.join(ASSETS_BASE_DIR, LOGS_FILENAME)
+    user = os.getenv('COMPUTERNAME')
+    try:
+        with open(path, 'a') as file:
+            file.write('{} | {} | {} | {} | {} | {} | {} | {}\n'.format(user, status["success"], status["errorMessage"], status["warning"], status["warningMessage"], status["outOfStockSKUs"], status["outputFilename"], timestamp))
+    except:
+        print('*** Error: Failed to write to logs. ***')
+
 def batchOrders(inputFilename):
+    timestamp = getTimestamp()
     batchFilename = validateInputFilename(inputFilename)
 
     isSuccess = True
@@ -327,6 +337,7 @@ def batchOrders(inputFilename):
         isSuccess = False
         response["success"] = isSuccess
         response["errorMessage"] = errorMessage
+        writeLog(timestamp, response)
         return response
 
     if not inventoryMaster:
@@ -334,6 +345,7 @@ def batchOrders(inputFilename):
         isSuccess = False
         response["success"] = isSuccess
         response["errorMessage"] = errorMessage
+        writeLog(timestamp, response)
         return response
 
     orders = getOrdersFromInputfile(batchFilename, uomMaster)
@@ -343,6 +355,7 @@ def batchOrders(inputFilename):
         isSuccess = False
         response["success"] = isSuccess
         response["errorMessage"] = errorMessage
+        writeLog(timestamp, response)
         return response
 
     combinedOrders, orderDetails = combineOrders(orders, uomMaster)
@@ -352,9 +365,10 @@ def batchOrders(inputFilename):
         isSuccess = False
         response["success"] = isSuccess
         response["errorMessage"] = errorMessage
+        writeLog(timestamp, response)
         return response
 
-    outputFilename = 'batch_output_{}.xlsx'.format(getTimestamp())
+    outputFilename = 'batch_output_{}.xlsx'.format(timestamp)
     outputFilepath = OUTPUT_DIR + outputFilename
 
     isWithoutWarning, warningMessage, outOfStockSKUs =  processResult(outputFilepath, uomMaster, inventoryMaster, combinedOrders, orderDetails)
@@ -362,4 +376,6 @@ def batchOrders(inputFilename):
     response["warningMessage"] = warningMessage
     response["outOfStockSKUs"] = outOfStockSKUs
     response["outputFilename"] = outputFilepath
+
+    writeLog(timestamp, response)
     return response
