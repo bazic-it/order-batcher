@@ -90,8 +90,9 @@ def getOrdersFromInputfile(filepath, uomMaster):
                     order = Order(line[0], '', line[1], line[2], line[3], line[4], line[5], line[6], qtyInEach, line[7])
                     orders.append(order)
                 count += 1
-    except:
+    except Exception as err:
         print('*** Error: Failed to read batch input file. Please make sure filename is valid. ***')
+        print('getOrdersFromInputfile(): {}'.format(err))
         return []
 
     return orders
