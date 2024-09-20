@@ -5,9 +5,10 @@ import os
 import pytest
 from script import *
 
-TEST_ASSETS_BASE_DIR = './assets/test'
-TEST_UOM_MASTER_FILENAME = 'test_uom_input.csv'
-TEST_INVENTORY_MASTER_FILENAME = 'test_inventory_master.xlsx'
+TEST_ASSETS_BASE_DIR = './assets/test/'
+TEST_UOM_MASTER_FILENAME = 'test_uom_input_compact.csv'
+TEST_INVENTORY_MASTER_FILENAME = 'test_inventory_master_compact.xlsx'
+TEST_BATCH_INPUT_FILENAME = 'shipstation_input.csv'
 
 def test_validateInputFilename():
     testFilename1 = "test.csv"
@@ -16,46 +17,92 @@ def test_validateInputFilename():
     res1 = validateInputFilename(testFilename1)
     res2 = validateInputFilename(testFilename2)
 
-    assert res1 == "test.csv"
-    assert res2 == "test.csv"
+    assert res1 == USER_DOWNLOADS + "test.csv"
+    assert res2 == USER_DOWNLOADS + "test.csv"
 
-# def test_getUOMMasterData():
-#     expected = {
-#             'SKU': {
-#                 'item_number': 'Item',
-#                 'uom': 'Uom',
-#             },
-#             '5076-BOX': {
-#                 'item_number': '5076',
-#                 'uom': '24',
-#             },
-#             '5076-CASE': {
-#                 'item_number': '5076',
-#                 'uom': '72',
-#             },
-#             '5076-EACH': {
-#                 'item_number': '5076',
-#                 'uom': '1',
-#             }
-#         }
+def test_getUOMMasterData():
+    expected = {
+            'SKU': {
+                'item_number': 'Item',
+                'uom': 'Uom',
+            },
+            '00402-EACH': {
+                'item_number': '402',
+                'uom': '1',
+            },
+            '01707-CASE': {
+                'item_number': '1707',
+                'uom': '48',
+            },
+            '01707-SET2': {
+                'item_number': '1707',
+                'uom': '2',
+            },
+            '1220-PACK2': {
+                'item_number': '1220',
+                'uom': '2',
+            },
+            '1228-BOX': {
+                'item_number': '1228',
+                'uom': '24',
+            },
+            '1245-CASE': {
+                'item_number': '1245',
+                'uom': '144',
+            },
+            'S-2-BOX': {
+                'item_number': 'S-2',
+                'uom': '24',
+            },
+            'S-2-CASE': {
+                'item_number': 'S-2',
+                'uom': '480',
+            },
+            'S-2-EACH': {
+                'item_number': 'S-2',
+                'uom': '1',
+            },
+            'S-2-PACK4': {
+                'item_number': 'S-2',
+                'uom': '4',
+            }
+        }
 
-#     path = os.path.join(TEST_ASSETS_BASE_DIR, TEST_UOM_MASTER_FILENAME)
-#     res = getUOMMasterData(path)
+    path = os.path.join(TEST_ASSETS_BASE_DIR, TEST_UOM_MASTER_FILENAME)
+    res = getUOMMasterData(path)
 
-#     assert res == expected
+    assert res == expected
 
-# def test_getInventoryMasterData():
-#     expected = {
-#         '5076': 11826,
-#         '5077-A': 8099,
-#         'S-2': 22913
-#     }
+def test_getInventoryMasterData():
+    expected = {
+        '1707': 162,
+        '1011': 10408,
+        '1019': 7469,
+        '102269': 305,
+        'S-2': 22717
+    }
 
-#     path = os.path.join(TEST_ASSETS_BASE_DIR, TEST_INVENTORY_MASTER_FILENAME)
-#     res = getInventoryMasterData(path)
+    path = os.path.join(TEST_ASSETS_BASE_DIR, TEST_INVENTORY_MASTER_FILENAME)
+    res = getInventoryMasterData(path)
     
-#     assert res == expected
+    assert res == expected
 
 def test_getOrdersFromInputfile():
-    # getOrdersFromInputfile()
-    pass
+    uomPath = os.path.join(TEST_ASSETS_BASE_DIR, TEST_UOM_MASTER_FILENAME)
+    inputPath = os.path.join(TEST_ASSETS_BASE_DIR + TEST_BATCH_INPUT_FILENAME)
+
+    uomMaster = getUOMMasterData(uomPath)
+    orders = getOrdersFromInputfile(inputPath, uomMaster)
+
+    order = orders[0]
+    assert order.sku == 'S-2-PACK4'
+    assert order.itemDescription == ''
+    assert order.itemPrice == 7.09
+    assert order.orderNumber == '113-7604483-9257052'
+    assert order.totalSaleOrder == 7.09
+    assert order.orderTotal == 7.59
+    assert order.paidByCustomer == 7.59
+    assert order.tax == 0.5
+    assert order.itemQty == 1
+    assert order.qtyInEach == 4
+    assert order.shipping == 0
