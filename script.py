@@ -1,5 +1,5 @@
 # Created: 9/13/2024
-# Last updated: 9/17/2024
+# Last updated: 9/23/2024
 
 import os
 import csv
@@ -86,16 +86,20 @@ def getOrdersFromInputfile(filepath, uomMaster):
                     continue
         
                 if (len(line) == 8):
-                    qtyInEach = int(uomMaster[line[0]]['uom']) * int(line[6])
+                    uomQty = int(uomMaster[line[0]]['uom']) if uomMaster[line[0]] else None
+                    if not uomQty:
+                        message = 'Item number {} is not in the UOM master data.'.format(line[0])
+                        return [], message
+                    qtyInEach = uomQty * int(line[6])
                     order = Order(line[0], '', line[1], line[2], line[3], line[4], line[5], line[6], qtyInEach, line[7])
                     orders.append(order)
                 count += 1
     except Exception as err:
-        print('*** Error: Failed to read batch input file. Please make sure filename is valid. ***')
-        print('getOrdersFromInputfile(): {}'.format(err))
-        return []
+        message = 'Please check your input batch file: {}'.format(filepath)
+        print('*** Error: Failed to read batch input file. Please make sure filename is valid. err: {} ***'.format(err))
+        return [], message
 
-    return orders
+    return orders, ''
 
 def combineOrders(orders, uomMaster):
     groupedByOrderNumber = {}
@@ -350,10 +354,10 @@ def batchOrders(inputFilename):
         writeLog(timestamp, response)
         return response
 
-    orders = getOrdersFromInputfile(batchFilename, uomMaster)
+    orders, orderMessage = getOrdersFromInputfile(batchFilename, uomMaster)
 
     if not orders:
-        errorMessage = "Please check your input batch file: " + inputFilename
+        errorMessage = orderMessage
         isSuccess = False
         response["success"] = isSuccess
         response["errorMessage"] = errorMessage
