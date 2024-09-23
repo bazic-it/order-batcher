@@ -86,9 +86,9 @@ def getOrdersFromInputfile(filepath, uomMaster):
                     continue
         
                 if (len(line) == 8):
-                    uomQty = int(uomMaster[line[0]]['uom']) if uomMaster[line[0]] else None
+                    uomQty = int(uomMaster[line[0]]['uom']) if line[0] in uomMaster else None
                     if not uomQty:
-                        message = 'Item number {} is not in the UOM master data.'.format(line[0])
+                        message = 'Item number <{}> is not in the UOM master data.'.format(line[0])
                         return [], message
                     qtyInEach = uomQty * int(line[6])
                     order = Order(line[0], '', line[1], line[2], line[3], line[4], line[5], line[6], qtyInEach, line[7])
