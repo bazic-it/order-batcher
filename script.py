@@ -244,6 +244,7 @@ def splitSKUs(orders):
 def processResult(filepath, uomMaster, inventoryMaster, orders, orderDetails):
     results = []
     grandTotalCrossCheck = 0
+    invoiceTotal = 0
 
     orders = splitSKUs(orders)
     
@@ -252,7 +253,11 @@ def processResult(filepath, uomMaster, inventoryMaster, orders, orderDetails):
         boxUOM = uomMaster[sku + '-BOX']['uom'] if uomMaster.get(sku +'-BOX') else 0
         grandTotalCrossCheck += getOrdersWithUOMVariants(results, orderInfo, caseUOM, boxUOM)
 
-    invoiceTotal = orderDetails['totalPaidByCustomer'] - orderDetails['totalOrderTax'] - orderDetails['totalShipping']
+    if orderDetails['totalPaidByCustomer'] > 0:
+        invoiceTotal = orderDetails['totalPaidByCustomer'] - orderDetails['totalOrderTax'] - orderDetails['totalShipping']
+    else:
+        invoiceTotal = orderDetails['totalOrderAmount'] - orderDetails['totalOrderTax'] - orderDetails['totalShipping']
+
     totalOrderBeforeDiscount = orderDetails['totalOrderAmount'] - orderDetails['totalOrderTax'] - orderDetails['totalShipping']
     resultDetails = {
         'grandTotal': grandTotalCrossCheck,
