@@ -177,7 +177,7 @@ def getOrdersWithUOMVariants(results, order, caseQty, boxQty):
             caseNumber,
             roundCurrency(pricePerPiece)
         ])
-        subTotal += (roundCurrency(pricePerPiece) * caseQty * caseNumber)
+        subTotal += round((roundCurrency(pricePerPiece) * caseQty * caseNumber),2)
     if boxNumber > 0:
         results.append([
             order['sku'],
@@ -186,7 +186,7 @@ def getOrdersWithUOMVariants(results, order, caseQty, boxQty):
             boxNumber,
             roundCurrency(pricePerPiece)
         ])
-        subTotal += (roundCurrency(pricePerPiece) * boxQty * boxNumber)
+        subTotal += round((roundCurrency(pricePerPiece) * boxQty * boxNumber),2)
     if eachNumber > 0:
         results.append([
             order['sku'],
@@ -195,7 +195,7 @@ def getOrdersWithUOMVariants(results, order, caseQty, boxQty):
             eachNumber,
             roundCurrency(pricePerPiece)
         ])
-        subTotal += (roundCurrency(pricePerPiece) * eachNumber)
+        subTotal += round((roundCurrency(pricePerPiece) * eachNumber),2)
     
     return subTotal
 
