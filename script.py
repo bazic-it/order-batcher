@@ -1,6 +1,3 @@
-# Created: 9/13/2024
-# Last updated: 9/23/2024
-
 import os
 import csv
 import pandas as pd
@@ -28,6 +25,9 @@ class Order:
 def getTimestamp():
     now = datetime.now()
     return datetime.strftime(now, "%m%d%Y%H%M%S")
+
+def roundCurrency(cur):
+    return round(cur, 3)
 
 def getUOMMasterData(inputFilepath):
     mapped = {}
@@ -175,27 +175,27 @@ def getOrdersWithUOMVariants(results, order, caseQty, boxQty):
             itemDesc,
             'CASE',
             caseNumber,
-            round(pricePerPiece, 3)
+            roundCurrency(pricePerPiece)
         ])
-        subTotal += (pricePerPiece * caseQty * caseNumber)
+        subTotal += (roundCurrency(pricePerPiece) * caseQty * caseNumber)
     if boxNumber > 0:
         results.append([
             order['sku'],
             itemDesc,
             'BOX',
             boxNumber,
-            round(pricePerPiece, 3)
+            roundCurrency(pricePerPiece)
         ])
-        subTotal += (pricePerPiece * boxQty * boxNumber)
+        subTotal += (roundCurrency(pricePerPiece) * boxQty * boxNumber)
     if eachNumber > 0:
         results.append([
             order['sku'],
             itemDesc,
             'EA',
             eachNumber,
-            round(pricePerPiece, 3)
+            roundCurrency(pricePerPiece)
         ])
-        subTotal += (pricePerPiece * eachNumber)
+        subTotal += (roundCurrency(pricePerPiece) * eachNumber)
     
     return subTotal
 
@@ -204,7 +204,7 @@ def resultIsValidated(resultDetails, orders, inventoryMaster):
     cannotFindStockSKUs = []
     isOutOfStock = False
 
-    if round(resultDetails['grandTotal'], 3) != round(resultDetails['totalOrderBeforeDiscount'], 3):
+    if roundCurrency(resultDetails['grandTotal']) != roundCurrency(resultDetails['totalOrderBeforeDiscount']):
         return False, 'Total Before Discount does not match with Grand Total. Please contact Ecom right away.', []
     
     for sku, orderInfo in orders.items():
@@ -241,6 +241,11 @@ def splitSKUs(orders):
 
     return newOrders
 
+def isTolerableOrderAmountDiscrepancy(totalOrderBeforeDiscount, grandTotalCrossCheck):
+    if abs(totalOrderBeforeDiscount - grandTotalCrossCheck) < 0.1:
+        return True
+    return False
+
 def processResult(filepath, uomMaster, inventoryMaster, orders, orderDetails):
     results = []
     grandTotalCrossCheck = 0
@@ -257,8 +262,12 @@ def processResult(filepath, uomMaster, inventoryMaster, orders, orderDetails):
         invoiceTotal = orderDetails['totalPaidByCustomer'] - orderDetails['totalOrderTax'] - orderDetails['totalShipping']
     else:
         invoiceTotal = orderDetails['totalOrderAmount'] - orderDetails['totalOrderTax'] - orderDetails['totalShipping']
-
+    
     totalOrderBeforeDiscount = orderDetails['totalOrderAmount'] - orderDetails['totalOrderTax'] - orderDetails['totalShipping']
+
+    if isTolerableOrderAmountDiscrepancy(totalOrderBeforeDiscount, grandTotalCrossCheck):
+        totalOrderBeforeDiscount = grandTotalCrossCheck
+
     resultDetails = {
         'grandTotal': grandTotalCrossCheck,
         'totalOrderBeforeDiscount': totalOrderBeforeDiscount,
@@ -287,7 +296,6 @@ def processResult(filepath, uomMaster, inventoryMaster, orders, orderDetails):
         worksheet.write(6, 0, 'Shipping: ${:.2f}'.format(resultDetails['totalShipping']))
         worksheet.write(7, 0, 'Invoice Total: ${:.2f}'.format(resultDetails['invoiceTotal']))
 
-    
     print('Your batch output file is: ' + filepath)
     
     isValidated, validationMessage, outOfStockSKUs = resultIsValidated(resultDetails, orders, inventoryMaster)
