@@ -267,7 +267,7 @@ def processResult(filepath, uomMaster, inventoryMaster, orders, orderDetails):
     if isTolerableOrderAmountDiscrepancy(totalOrderBeforeDiscount, grandTotalCrossCheck):
         totalOrderBeforeDiscount = grandTotalCrossCheck
 
-    discount = invoiceTotal - totalOrderBeforeDiscount
+    discount = abs(invoiceTotal - totalOrderBeforeDiscount)
 
     resultDetails = {
         'grandTotal': grandTotalCrossCheck,
