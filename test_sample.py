@@ -1,5 +1,5 @@
 # Created: 9/17/2024
-# Last updated: 9/17/2024
+# Last updated: 9/20/2024
 
 import os
 import pytest
@@ -92,17 +92,18 @@ def test_getOrdersFromInputfile():
     inputPath = os.path.join(TEST_ASSETS_BASE_DIR + TEST_BATCH_INPUT_FILENAME)
 
     uomMaster = getUOMMasterData(uomPath)
-    orders = getOrdersFromInputfile(inputPath, uomMaster)
+    orders, message = getOrdersFromInputfile(inputPath, uomMaster)
 
     order = orders[0]
+    assert message == ''
     assert order.sku == 'S-2-PACK4'
     assert order.itemDescription == ''
     assert order.itemPrice == 7.09
     assert order.orderNumber == '113-7604483-9257052'
-    assert order.totalSaleOrder == 7.09
+    assert order.totalSaleOrder == (7.09*2)
     assert order.orderTotal == 7.59
     assert order.paidByCustomer == 7.59
     assert order.tax == 0.5
-    assert order.itemQty == 1
-    assert order.qtyInEach == 4
+    assert order.itemQty == 2
+    assert order.qtyInEach == (4*2)
     assert order.shipping == 0
