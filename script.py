@@ -264,9 +264,10 @@ def processResult(filepath, uomMaster, inventoryMaster, orders, orderDetails):
         invoiceTotal = orderDetails['totalOrderAmount'] - orderDetails['totalOrderTax'] - orderDetails['totalShipping']
     
     totalOrderBeforeDiscount = orderDetails['totalOrderAmount'] - orderDetails['totalOrderTax'] - orderDetails['totalShipping']
-
     if isTolerableOrderAmountDiscrepancy(totalOrderBeforeDiscount, grandTotalCrossCheck):
         totalOrderBeforeDiscount = grandTotalCrossCheck
+
+    discount = invoiceTotal - totalOrderBeforeDiscount
 
     resultDetails = {
         'grandTotal': grandTotalCrossCheck,
@@ -275,8 +276,8 @@ def processResult(filepath, uomMaster, inventoryMaster, orders, orderDetails):
         'totalPaidByCustomer': orderDetails['totalPaidByCustomer'],
         'totalTax': orderDetails['totalOrderTax'],
         'totalShipping': orderDetails['totalShipping'],
-        'discount': invoiceTotal - totalOrderBeforeDiscount,
-        'invoiceTotal': invoiceTotal
+        'discount': discount,
+        'invoiceTotal': totalOrderBeforeDiscount - discount
     }
 
     dataFrame = pd.DataFrame(results, columns=['SKU', 'Desc', 'UOM', 'QTY', 'PpP'])
