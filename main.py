@@ -4,13 +4,13 @@ from tkinter import messagebox
 from script import *
 
 INSTRUCTION = """
-\n
     1. Copy and paste your batch file from your Downloads folder into 'Batch Filename' field. (Note: Your batch file needs to be in the Downloads folder.)\n
     2. Click the 'Batch' button or hit Enter on your keyboard.\n
     3. If there is a warning or error, a pop-up will show up with the message.\n
     4. If it is successful, an Excel file with the result will open automatically.\n
     5. This program automatically converts quantity to CASE, BOX, and EACH. This program also splits SKUs bundle into individual SKU.\n
     6. Copy the information from the Excel file onto SAP. (Note: If you are selecting all the columns when copying to SAP, make sure the columns order match.)\n
+    7. Do not forget to enter the Discount amount on SAP, if there is any.\n
 """
 
 class App:
