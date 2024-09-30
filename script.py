@@ -27,7 +27,7 @@ def getTimestamp():
     return datetime.strftime(now, "%m%d%Y%H%M%S")
 
 def roundCurrency(cur):
-    return round(cur, 3)
+    return round(cur, 4)
 
 def getUOMMasterData(inputFilepath):
     mapped = {}
@@ -175,27 +175,27 @@ def getOrdersWithUOMVariants(results, order, caseQty, boxQty):
             itemDesc,
             'CASE',
             caseNumber,
-            roundCurrency(pricePerPiece)
+            pricePerPiece
         ])
-        subTotal += round((roundCurrency(pricePerPiece) * caseQty * caseNumber),2)
+        subTotal += pricePerPiece * caseQty * caseNumber
     if boxNumber > 0:
         results.append([
             order['sku'],
             itemDesc,
             'BOX',
             boxNumber,
-            roundCurrency(pricePerPiece)
+            pricePerPiece
         ])
-        subTotal += round((roundCurrency(pricePerPiece) * boxQty * boxNumber),2)
+        subTotal += pricePerPiece * boxQty * boxNumber
     if eachNumber > 0:
         results.append([
             order['sku'],
             itemDesc,
             'EA',
             eachNumber,
-            roundCurrency(pricePerPiece)
+            pricePerPiece
         ])
-        subTotal += round((roundCurrency(pricePerPiece) * eachNumber),2)
+        subTotal += pricePerPiece * eachNumber
     
     return subTotal
 
