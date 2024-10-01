@@ -1,4 +1,5 @@
 import os
+import time
 import csv
 import pandas as pd
 from datetime import datetime
@@ -27,10 +28,30 @@ def getTimestamp():
     now = datetime.now()
     return datetime.strftime(now, "%m%d%Y%H%M%S")
 
+def getCurrentime():
+    return datetime.now()
+
+def getFileModifiedDate(filepath):
+    return datetime.fromtimestamp(os.path.getmtime(filepath))
+
+def getDaysDifferent(currentTime, timestamp):
+    return (currentTime - timestamp).days
+
 def roundCurrency(cur):
     return round(cur, 4)
 
+def sortOrders(a, b):
+    if a[2] == 'CASE' and (b[2] == 'BOX' or b[2] == 'EA'):
+        return -1
+    elif a[2] == 'BOX' and b[2] == 'EA':
+        return -1
+    else:
+        return 1
+
 def getUOMMasterData(inputFilepath):
+    age = getDaysDifferent(getCurrentime(), getFileModifiedDate(inputFilepath))
+    message = 'Inventory master file was updated {} days ago.'.format(age)
+
     mapped = {}
 
     try:
@@ -44,19 +65,14 @@ def getUOMMasterData(inputFilepath):
                     }
     except:
         print('*** Error: Failed to read input file for UOM Master. Please make sure filename is valid. ***')
-        return {}
+        return {}, message
 
-    return mapped
-
-def sortOrders(a, b):
-    if a[2] == 'CASE' and (b[2] == 'BOX' or b[2] == 'EA'):
-        return -1
-    elif a[2] == 'BOX' and b[2] == 'EA':
-        return -1
-    else:
-        return 1
+    return mapped, message
 
 def getInventoryMasterData(inputFilepath):
+    age = getDaysDifferent(getCurrentime(), getFileModifiedDate(inputFilepath))
+    message = 'Inventory master file was updated {} days ago.'.format(age)
+
     mapped = {}
 
     try:
@@ -78,9 +94,9 @@ def getInventoryMasterData(inputFilepath):
         #             mapped[line[1]] = int(line[3]) if line[3].isnumeric() else 0
     except:
         print('*** Error: Failed to read input file for Inventory Master. Please make sure filename is valid. ***')
-        return {}
+        return {}, message
 
-    return mapped
+    return mapped, message
 
 def getOrdersFromInputfile(filepath, uomMaster):
     orders = []
@@ -360,8 +376,10 @@ def batchOrders(inputFilename):
     uomMasterFilepath = getUOMMasterFilepath()
     inventoryMasterFilepath = getInventoryMasterFilepath()
 
-    uomMaster = getUOMMasterData(uomMasterFilepath)
-    inventoryMaster = getInventoryMasterData(inventoryMasterFilepath)
+    uomMaster, uomMsg = getUOMMasterData(uomMasterFilepath)
+    inventoryMaster, invMsg = getInventoryMasterData(inventoryMasterFilepath)
+    print(uomMsg)
+    print(invMsg)
 
     if not uomMaster:
         errorMessage = "Please check UOM Master: " + uomMasterFilepath
