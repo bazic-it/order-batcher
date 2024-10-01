@@ -3,6 +3,7 @@ import csv
 import pandas as pd
 from datetime import datetime
 import openpyxl
+from functools import cmp_to_key
 from config import *
 
 class Order:
@@ -46,6 +47,14 @@ def getUOMMasterData(inputFilepath):
         return {}
 
     return mapped
+
+def sortOrders(a, b):
+    if a[2] == 'CASE' and (b[2] == 'BOX' or b[2] == 'EA'):
+        return -1
+    elif a[2] == 'BOX' and b[2] == 'EA':
+        return -1
+    else:
+        return 1
 
 def getInventoryMasterData(inputFilepath):
     mapped = {}
@@ -279,6 +288,8 @@ def processResult(filepath, uomMaster, inventoryMaster, orders, orderDetails):
         'discount': discount,
         'invoiceTotal': totalOrderBeforeDiscount - discount
     }
+
+    results.sort(key=cmp_to_key(sortOrders))
 
     dataFrame = pd.DataFrame(results, columns=['SKU', 'Desc', 'UOM', 'QTY', 'PpP'])
     dataFrame.index = dataFrame.index + 1
