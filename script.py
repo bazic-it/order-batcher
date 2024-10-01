@@ -50,7 +50,7 @@ def sortOrders(a, b):
 
 def getUOMMasterData(inputFilepath):
     age = getDaysDifferent(getCurrentime(), getFileModifiedDate(inputFilepath))
-    message = 'Inventory master file was updated {} days ago.'.format(age)
+    message = 'UOM master file was updated {} days ago.'.format(age)
 
     mapped = {}
 
