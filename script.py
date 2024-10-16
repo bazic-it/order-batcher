@@ -48,12 +48,13 @@ def sortOrders(a, b):
         return 1
 
 def getUOMMasterData(inputFilepath):
-    age = getDaysDifferent(getCurrentime(), getFileModifiedDate(inputFilepath))
-    message = 'UOM master file was updated {} days ago.'.format(age)
-
     mapped = {}
+    message = None
 
     try:
+        age = getDaysDifferent(getCurrentime(), getFileModifiedDate(inputFilepath))
+        message = 'UOM master file was updated {} days ago.'.format(age)
+
         with open (inputFilepath, mode='r') as file:
             content = csv.reader(file)
             for line in content:
@@ -69,12 +70,13 @@ def getUOMMasterData(inputFilepath):
     return mapped, message
 
 def getInventoryMasterData(inputFilepath):
-    age = getDaysDifferent(getCurrentime(), getFileModifiedDate(inputFilepath))
-    message = 'Inventory master file was updated {} days ago.'.format(age)
-
     mapped = {}
-
+    message = None
+    
     try:
+        age = getDaysDifferent(getCurrentime(), getFileModifiedDate(inputFilepath))
+        message = 'Inventory master file was updated {} days ago.'.format(age)
+
         workbook = openpyxl.load_workbook(inputFilepath) # #, Item No., Item Desc., Available Qty
         sheet = workbook.active
         for r in range(2, sheet.max_row+1):
