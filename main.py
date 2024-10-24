@@ -78,7 +78,7 @@ class App:
                 if response["notExistSKUs"]:
                     notExistSKUs = "\n".join(response["notExistSKUs"])
                     self.infoBox.config(state=tk.NORMAL)
-                    self.infoBox.insert(tk.END, "Not Exist:\n" + notExistSKUs)
+                    self.infoBox.insert(tk.END, "** Not Exist: **\n" + notExistSKUs)
                     self.infoBox.config(state=tk.DISABLED)
                 self.showStatusMessage("Error", response["errorMessage"])
 
@@ -86,7 +86,7 @@ class App:
                 if response["outOfStockSKUs"]:
                     outOfStockSKUsList = "\n".join(response["outOfStockSKUs"])
                     self.infoBox.config(state=tk.NORMAL)
-                    self.infoBox.insert(tk.END, "Out of Stock:\n" + outOfStockSKUsList)
+                    self.infoBox.insert(tk.END, "** Out of Stock: **\n" + outOfStockSKUsList)
                     self.infoBox.config(state=tk.DISABLED)
                 self.showStatusMessage("Warning", response["warningMessage"])
 
