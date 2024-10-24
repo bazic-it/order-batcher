@@ -101,6 +101,7 @@ def getInventoryMasterData(inputFilepath):
 
 def getOrdersFromInputfile(filepath, uomMaster):
     orders = []
+    itemNumbersNotInUOMMaster = []
     
     try:
         with open (filepath, mode='r') as file:
@@ -114,8 +115,10 @@ def getOrdersFromInputfile(filepath, uomMaster):
                 if (len(line) == 8):
                     uomQty = int(uomMaster[line[0]]['uom']) if line[0] in uomMaster else None
                     if not uomQty:
-                        message = 'Item number <{}> is not in the UOM master data.'.format(line[0])
-                        return [], message
+                        # message = 'Item number <{}> is not in the UOM master data.'.format(line[0])
+                        # return [], message
+                        itemNumbersNotInUOMMaster.append(line[0])
+                        continue
                     qtyInEach = uomQty * int(line[6])
                     order = Order(line[0], '', line[1], line[2], line[3], line[4], line[5], line[6], qtyInEach, line[7])
                     orders.append(order)
@@ -123,9 +126,13 @@ def getOrdersFromInputfile(filepath, uomMaster):
     except Exception as err:
         message = 'Please check your input batch file: {}'.format(filepath)
         print('*** Error: Failed to read batch input file. Please make sure filename is valid. err: {} ***'.format(err))
-        return [], message
+        return -1, [], message
 
-    return orders, ''
+    if itemNumbersNotInUOMMaster:
+        message = 'One or more item numbers are not in the UOM master data.'
+        return 0, itemNumbersNotInUOMMaster, message
+
+    return 1, orders, ''
 
 def combineOrders(orders, uomMaster):
     groupedByOrderNumber = {}
@@ -352,9 +359,12 @@ def getInventoryMasterFilepath():
 def writeLog(timestamp, status):
     path = os.path.join(ASSETS_BASE_DIR, LOGS_FILENAME)
     user = os.getenv('COMPUTERNAME')
+
+    items = status["notExistSKUs"] or status["outOfStockSKUs"]
+
     try:
         with open(path, 'a') as file:
-            file.write('USR;{} | IN;{} | SUCCESS;{} | ERR;{} | WARNING;{} | WARN;{} | OOS;{} | OUT;{} | VER;{} | TS;{}\n'.format(user, status["inputFilename"], status["success"], status["errorMessage"], status["warning"], status["warningMessage"], status["outOfStockSKUs"], status["outputFilename"], APP_VERSION, timestamp))
+            file.write('USR;{} | IN;{} | SUCCESS;{} | ERR;{} | WARNING;{} | WARN;{} | ITEMS;{} | OUT;{} | VER;{} | TS;{}\n'.format(user, status["inputFilename"], status["success"], status["errorMessage"], status["warning"], status["warningMessage"], items, status["outputFilename"], APP_VERSION, timestamp))
     except:
         print('*** Error: Failed to write to logs. ***')
 
@@ -367,6 +377,7 @@ def batchOrders(inputFilename):
     response = {
         'success': isSuccess,
         'errorMessage': errorMessage,
+        'notExistSKUs': [],
         'warning': None,
         'warningMessage': None,
         'outOfStockSKUs': [],
@@ -398,13 +409,21 @@ def batchOrders(inputFilename):
         writeLog(timestamp, response)
         return response
 
-    orders, orderMessage = getOrdersFromInputfile(batchFilename, uomMaster)
+    ordersStatus, orders, orderMessage = getOrdersFromInputfile(batchFilename, uomMaster)
 
-    if not orders:
+    if ordersStatus == -1:
         errorMessage = orderMessage
         isSuccess = False
         response["success"] = isSuccess
         response["errorMessage"] = errorMessage
+        writeLog(timestamp, response)
+        return response
+    if ordersStatus == 0:
+        errorMessage = orderMessage
+        isSuccess = False
+        response["success"] = isSuccess
+        response["errorMessage"] = errorMessage
+        response["notExistSKUs"] = orders
         writeLog(timestamp, response)
         return response
 

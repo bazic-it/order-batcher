@@ -39,12 +39,12 @@ class App:
         self.statusMessage = tk.Label(self.frame1, text='', font=("Arial", 9))
         self.statusMessage.pack(padx=10, pady=10)
 
-        self.labelFrame2 = tk.LabelFrame(self.frame1, text="Out of Stock SKU(s)")
+        self.labelFrame2 = tk.LabelFrame(self.frame1, text="Message")
         self.labelFrame2.pack(padx=20, pady=20)
 
-        self.outOfStockSKUsBox = tk.Text(self.labelFrame2, font=("Arial", 9), width=50)
-        self.outOfStockSKUsBox.pack(padx=10, pady=(5,10))
-        self.outOfStockSKUsBox.config(state=tk.DISABLED)
+        self.infoBox = tk.Text(self.labelFrame2, font=("Arial", 9), width=50)
+        self.infoBox.pack(padx=10, pady=(5,10))
+        self.infoBox.config(state=tk.DISABLED)
         
         self.root.mainloop()
 
@@ -56,9 +56,9 @@ class App:
             self.submitBatch()
 
     def clearMessages(self):
-        self.outOfStockSKUsBox.config(state=tk.NORMAL)
-        self.outOfStockSKUsBox.delete('1.0', tk.END)
-        self.outOfStockSKUsBox.config(state=tk.DISABLED)
+        self.infoBox.config(state=tk.NORMAL)
+        self.infoBox.delete('1.0', tk.END)
+        self.infoBox.config(state=tk.DISABLED)
         self.statusMessage.config(text="")
 
     def submitBatch(self):
@@ -75,15 +75,19 @@ class App:
                 os.system("start EXCEL.EXE " + response["outputFilename"])
 
             if response["success"] is not None and not response["success"]:
+                if response["notExistSKUs"]:
+                    notExistSKUs = "\n".join(response["notExistSKUs"])
+                    self.infoBox.config(state=tk.NORMAL)
+                    self.infoBox.insert(tk.END, "Not Exist:\n" + notExistSKUs)
+                    self.infoBox.config(state=tk.DISABLED)
                 self.showStatusMessage("Error", response["errorMessage"])
 
             if response["warning"] is not None and not response["warning"]:
                 if response["outOfStockSKUs"]:
                     outOfStockSKUsList = "\n".join(response["outOfStockSKUs"])
-                    self.outOfStockSKUsBox.config(state=tk.NORMAL)
-                    self.outOfStockSKUsBox.insert(tk.END, outOfStockSKUsList)
-                    self.outOfStockSKUsBox.config(state=tk.DISABLED)
-                    
+                    self.infoBox.config(state=tk.NORMAL)
+                    self.infoBox.insert(tk.END, "Out of Stock:\n" + outOfStockSKUsList)
+                    self.infoBox.config(state=tk.DISABLED)
                 self.showStatusMessage("Warning", response["warningMessage"])
 
             self.inputField.delete(0, "end")
