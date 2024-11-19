@@ -297,8 +297,8 @@ def processResult(filepath, uomMaster, inventoryMaster, orders, orderDetails):
         invoiceTotal = orderDetails['totalOrderAmount'] - orderDetails['totalOrderTax'] - orderDetails['totalShipping']
     
     totalOrderBeforeDiscount = orderDetails['totalOrderAmount'] - orderDetails['totalOrderTax'] - orderDetails['totalShipping']
-    if isTolerableOrderAmountDiscrepancy(totalOrderBeforeDiscount, grandTotalCrossCheck):
-        totalOrderBeforeDiscount = grandTotalCrossCheck
+    # if isTolerableOrderAmountDiscrepancy(totalOrderBeforeDiscount, grandTotalCrossCheck):
+    #     totalOrderBeforeDiscount = grandTotalCrossCheck
 
     discount = abs(invoiceTotal - totalOrderBeforeDiscount)
 
