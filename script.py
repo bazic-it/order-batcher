@@ -99,6 +99,12 @@ def getInventoryMasterData(inputFilepath):
 
     return mapped, message
 
+def cleansItemNumberFromInputFile(itemNumber):
+    cleaned = itemNumber
+    if ':' in itemNumber:
+        cleaned = itemNumber.split(':')[1].strip()
+    return cleaned
+
 def getOrdersFromInputfile(filepath, uomMaster):
     orders = []
     itemNumbersNotInUOMMaster = []
@@ -113,14 +119,15 @@ def getOrdersFromInputfile(filepath, uomMaster):
                     continue
         
                 if (len(line) == 8):
-                    uomQty = int(uomMaster[line[0]]['uom']) if line[0] in uomMaster else None
+                    itemNumber = cleansItemNumberFromInputFile(line[0])
+                    uomQty = int(uomMaster[itemNumber]['uom']) if itemNumber in uomMaster else None
                     if not uomQty:
                         # message = 'Item number <{}> is not in the UOM master data.'.format(line[0])
                         # return [], message
-                        itemNumbersNotInUOMMaster.append(line[0])
+                        itemNumbersNotInUOMMaster.append(itemNumber)
                         continue
                     qtyInEach = uomQty * int(line[6])
-                    order = Order(line[0], '', line[1], line[2], line[3], line[4], line[5], line[6], qtyInEach, line[7])
+                    order = Order(itemNumber, '', line[1], line[2], line[3], line[4], line[5], line[6], qtyInEach, line[7])
                     orders.append(order)
                 count += 1
     except Exception as err:
