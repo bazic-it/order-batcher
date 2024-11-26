@@ -87,12 +87,6 @@ def getInventoryMasterData(inputFilepath):
                     itemNumber = str(data)
                 if c == 4:
                     mapped[itemNumber] = data
-
-        # with open (inputFilepath, mode='r') as file:
-        #     content = csv.reader(file)
-        #     for line in content:
-        #         if (len(line) == 4):
-        #             mapped[line[1]] = int(line[3]) if line[3].isnumeric() else 0
     except:
         print('*** Error: Failed to read input file for Inventory Master. Please make sure filename is valid. ***')
         return {}, message
@@ -302,8 +296,6 @@ def processResult(filepath, uomMaster, inventoryMaster, orders, orderDetails):
         invoiceTotal = orderDetails['totalOrderAmount'] - orderDetails['totalOrderTax'] - orderDetails['totalShipping']
     
     totalOrderBeforeDiscount = orderDetails['totalOrderAmount'] - orderDetails['totalOrderTax'] - orderDetails['totalShipping']
-    # if isTolerableOrderAmountDiscrepancy(totalOrderBeforeDiscount, grandTotalCrossCheck):
-    #     totalOrderBeforeDiscount = grandTotalCrossCheck
 
     discount = abs(invoiceTotal - totalOrderBeforeDiscount)
 
@@ -322,7 +314,6 @@ def processResult(filepath, uomMaster, inventoryMaster, orders, orderDetails):
 
     dataFrame = pd.DataFrame(results, columns=['SKU', 'Desc', 'UOM', 'QTY', 'PpP'])
     dataFrame.index = dataFrame.index + 1
-    # dataFrame.to_excel(filepath, startrow=3, startcol=0) # WORKING
 
     with pd.ExcelWriter(filepath, engine='xlsxwriter') as writer:
         dataFrame.to_excel(writer, startrow=10, startcol=0)
