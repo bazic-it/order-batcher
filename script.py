@@ -105,6 +105,26 @@ def cleansItemNumberFromInputFile(itemNumber):
         cleaned = itemNumber.split(':')[1].strip()
     return cleaned
 
+def mapItemNumberToUOMQty(itemNumber, uomMaster):
+    _itemNumber = itemNumber
+
+    if ('EA' in _itemNumber and 'EACH' not in _itemNumber):
+        _itemNumber = itemNumber.replace('EA', 'EACH')
+
+    uomQty = int(uomMaster[_itemNumber]['uom']) if _itemNumber in uomMaster else None
+
+    return (_itemNumber, uomQty)
+
+def splitItemNumberBundle(itemNumber, uomMaster):
+    itemNumbers = [itemNumber]
+
+    if '+' in itemNumber:
+        itemNumbers = itemNumber.split('+')
+
+    itemNumbers = list(map(lambda x: mapItemNumberToUOMQty(x, uomMaster), itemNumbers))
+
+    return itemNumbers
+
 def getOrdersFromInputfile(filepath, uomMaster):
     orders = []
     itemNumbersNotInUOMMaster = []
@@ -120,15 +140,16 @@ def getOrdersFromInputfile(filepath, uomMaster):
         
                 if (len(line) == 8):
                     itemNumber = cleansItemNumberFromInputFile(line[0])
-                    uomQty = int(uomMaster[itemNumber]['uom']) if itemNumber in uomMaster else None
-                    if not uomQty:
-                        # message = 'Item number <{}> is not in the UOM master data.'.format(line[0])
-                        # return [], message
-                        itemNumbersNotInUOMMaster.append(itemNumber)
-                        continue
-                    qtyInEach = uomQty * int(line[6])
-                    order = Order(itemNumber, '', line[1], line[2], line[3], line[4], line[5], line[6], qtyInEach, line[7])
-                    orders.append(order)
+                    itemNumbers = splitItemNumberBundle(itemNumber, uomMaster)
+
+                    for _itemNumber, uomQty in itemNumbers:
+                        if not uomQty:
+                            itemNumbersNotInUOMMaster.append(_itemNumber)
+                            continue
+                        qtyInEach = uomQty * int(line[6])
+                        itemPrice = float(line[1]) / len(itemNumbers)
+                        order = Order(_itemNumber, '', itemPrice, line[2], line[3], line[4], line[5], line[6], qtyInEach, line[7])
+                        orders.append(order)
                 count += 1
     except Exception as err:
         message = 'Please check your input batch file: {}'.format(filepath)
@@ -202,7 +223,7 @@ def getOrdersWithUOMVariants(results, order, caseQty, boxQty):
     totalQty = order['totalQty']
     itemDesc = order['desc']
     pricePerPiece = order['pricePerPiece']
- 
+
     if caseQty != 0:
         caseNumber = totalQty // caseQty
     if boxQty != 0:
@@ -260,27 +281,6 @@ def resultIsValidated(resultDetails, orders, inventoryMaster):
         
     return True, '', []
 
-def splitSKUs(orders):
-    newOrders = {}
-
-    for sku, orderInfo in orders.items():
-        if '+' in sku:
-            skus = sku.split('+')
-            pricePerSku = orderInfo['pricePerPiece'] / len(skus)
-            for newSku in skus:
-                newOrderInfo = {
-                    'sku': newSku,
-                    'desc': orderInfo['desc'],
-                    'totalQty': orderInfo['totalQty'],
-                    'totalPrice': orderInfo['totalPrice'],
-                    'pricePerPiece': pricePerSku
-                }
-                newOrders[newSku] = newOrderInfo
-        else:
-            newOrders[sku] = orderInfo
-
-    return newOrders
-
 def isTolerableOrderAmountDiscrepancy(totalOrderBeforeDiscount, grandTotalCrossCheck):
     if abs(totalOrderBeforeDiscount - grandTotalCrossCheck) < 0.1:
         return True
@@ -291,8 +291,6 @@ def processResult(filepath, uomMaster, inventoryMaster, orders, orderDetails):
     grandTotalCrossCheck = 0
     invoiceTotal = 0
 
-    orders = splitSKUs(orders)
-    
     for sku, orderInfo in orders.items():
         caseUOM = uomMaster[sku + '-CASE']['uom'] if uomMaster.get(sku + '-CASE') else 0
         boxUOM = uomMaster[sku + '-BOX']['uom'] if uomMaster.get(sku +'-BOX') else 0
@@ -340,7 +338,7 @@ def processResult(filepath, uomMaster, inventoryMaster, orders, orderDetails):
         worksheet.write(7, 0, 'Invoice Total: ${:.2f}'.format(resultDetails['invoiceTotal']))
 
     print('Your batch output file is: ' + filepath)
-    
+
     isValidated, validationMessage, outOfStockSKUs = resultIsValidated(resultDetails, orders, inventoryMaster)
     if not isValidated:
         return False, validationMessage, outOfStockSKUs
@@ -417,7 +415,7 @@ def batchOrders(inputFilename):
         return response
 
     ordersStatus, orders, orderMessage = getOrdersFromInputfile(batchFilename, uomMaster)
-
+    
     if ordersStatus == -1:
         errorMessage = orderMessage
         isSuccess = False
