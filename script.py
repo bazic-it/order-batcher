@@ -69,6 +69,33 @@ def getUOMMasterData(inputFilepath):
 
     return mapped, message
 
+def getUOMMasterDataWithExcelFormat(inputFilepath):
+    mapped = {}
+    message = None
+    
+    try:
+        age = getDaysDifferent(getCurrentime(), getFileModifiedDate(inputFilepath))
+        message = 'UOM master file was updated {} days ago.'.format(age)
+
+        workbook = openpyxl.load_workbook(inputFilepath)
+        sheet = workbook.active
+        for r in range(2, sheet.max_row+1):
+            itemNumber = None
+            for c in range(1, sheet.max_column+1):
+                data = sheet.cell(row=r, column=c).value
+                if c == 1:
+                    itemNumber = str(data)
+                    mapped[itemNumber] = {}
+                if c == 2:
+                    mapped[itemNumber]['item_number'] = str(data)
+                if c == 3:
+                    mapped[itemNumber]['uom'] = int(data)
+    except:
+        print('*** Error: Failed to read input file for UOM Master. Please make sure filename is valid. ***')
+        return {}, message
+
+    return mapped, message
+
 def getInventoryMasterData(inputFilepath):
     mapped = {}
     message = None
@@ -384,7 +411,7 @@ def batchOrders(inputFilename):
     uomMasterFilepath = getUOMMasterFilepath()
     inventoryMasterFilepath = getInventoryMasterFilepath()
 
-    uomMaster, uomMsg = getUOMMasterData(uomMasterFilepath)
+    uomMaster, uomMsg = getUOMMasterDataWithExcelFormat(uomMasterFilepath)
     inventoryMaster, invMsg = getInventoryMasterData(inventoryMasterFilepath)
     print(uomMsg)
     print(invMsg)
