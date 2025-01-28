@@ -381,6 +381,7 @@ def getInventoryMasterFilepath():
 
 def writeLog(timestamp, status):
     path = os.path.join(ASSETS_BASE_DIR, LOGS_FILENAME)
+    localPath = LOCAL_LOGS_FILEPATH
     user = os.getenv('COMPUTERNAME')
 
     items = status["notExistSKUs"] or status["outOfStockSKUs"]
@@ -388,8 +389,15 @@ def writeLog(timestamp, status):
     try:
         with open(path, 'a') as file:
             file.write('USR;{} | IN;{} | SUCCESS;{} | ERR;{} | WARNING;{} | WARN;{} | ITEMS;{} | OUT;{} | VER;{} | TS;{}\n'.format(user, status["inputFilename"], status["success"], status["errorMessage"], status["warning"], status["warningMessage"], items, status["outputFilename"], APP_VERSION, timestamp))
-    except:
-        print('*** Error: Failed to write to logs. ***')
+    except Exception as e:
+        print('*** Error: Failed to write logs to master file; {} ***'.format(e))
+
+    try:
+        with open(localPath, 'a') as file:
+            file.write('USR;{} | IN;{} | SUCCESS;{} | ERR;{} | WARNING;{} | WARN;{} | ITEMS;{} | OUT;{} | VER;{} | TS;{}\n'.format(user, status["inputFilename"], status["success"], status["errorMessage"], status["warning"], status["warningMessage"], items, status["outputFilename"], APP_VERSION, timestamp))
+    except Exception as e:
+        print('*** Error: Failed to write logs to local file; {} ***'.format(e))
+
 
 def batchOrders(inputFilename):
     timestamp = getTimestamp()
