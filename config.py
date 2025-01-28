@@ -1,6 +1,6 @@
 from pathlib import Path
 
-APP_VERSION = '1.3.1'
+APP_VERSION = '1.3.2'
 
 ASSETS_BASE_DIR = 'S:/ECOM-CC-WHS/master_files'
 # ASSETS_BASE_DIR = './test_assets/'
