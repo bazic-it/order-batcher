@@ -7,5 +7,6 @@ ASSETS_BASE_DIR = 'S:/ECOM-CC-WHS/master_files'
 UOM_MASTER_FILENAME = 'uom_input.xlsx'
 INVENTORY_MASTER_FILENAME = 'Available Qty Whse 01 + Price Levels.xlsx'
 LOGS_FILENAME = 'logs.txt'
+LOCAL_LOGS_FILEPATH = "./assets/local_logs.txt"
 USER_DOWNLOADS = str(Path.home() / "Downloads") + '/'
 OUTPUT_DIR = './batch_outputs/'
