@@ -1,0 +1,2 @@
+USR;BAZIC-IT-02 | IN;C:\Users\hjantasmin\Downloads/demo1.csv | SUCCESS;False | ERR;Please check UOM Master: ./assets/test/uom_input.csv | WARNING;None | WARN;None | OOS;[] | OUT; | VER;1.2.7 | TS;10162024124046
+USR;BAZIC-IT-02 | IN;C:\Users\hjantasmin\Downloads/demo1.csv | SUCCESS;False | ERR;Please check UOM Master: ./assets/test/uom_input.csv | WARNING;None | WARN;None | OOS;[] | OUT; | VER;1.2.7 | TS;10162024124113
